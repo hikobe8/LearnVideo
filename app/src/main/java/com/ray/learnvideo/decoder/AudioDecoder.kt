@@ -3,7 +3,7 @@ package com.ray.learnvideo.decoder
 import android.media.*
 import android.os.Environment
 import android.util.Log
-import com.ray.learnvideo.MyMediaExtractor
+import com.ray.learnvideo.AudioExtractor
 import java.io.File
 
 /**
@@ -45,7 +45,7 @@ class AudioDecoder : Runnable {
 
     private var mIsRunning = true
 
-    private var mediaExtractor: MyMediaExtractor? = null
+    private var mediaExtractor: AudioExtractor? = null
 
     private var mCodec: MediaCodec? = null
 
@@ -144,10 +144,10 @@ class AudioDecoder : Runnable {
     }
 
     private fun initExtractor() {
-        mediaExtractor = MyMediaExtractor().apply {
+        mediaExtractor = AudioExtractor().apply {
             setDataSource(
                 Environment.getExternalStorageDirectory()
-                    .toString() + File.separator + "test.mp4"
+                    .toString() + File.separator + "monkey.mp4"
             )
         }
     }

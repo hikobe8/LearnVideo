@@ -9,6 +9,8 @@ import android.os.Environment
 import android.util.Log
 import android.widget.Toast
 import com.ray.learnvideo.decoder.AudioDecoder
+import com.ray.learnvideo.decoder.VideoDecoder
+import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -24,17 +26,8 @@ class MainActivity : AppCompatActivity() {
                 requestPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
             }
         }
-//        thread {
-//            MyMediaExtractor().apply {
-////                setDataSource("https://media.w3.org/2010/05/sintel/trailer.mp4")
-//                setDataSource(
-//                    Environment.getExternalStorageDirectory()
-//                        .toString() + File.separator + "test.mp4"
-//                )
-//                extract()
-//            }
-//        }
-        val executorService = Executors.newFixedThreadPool(2)
+        val executorService = Executors.newFixedThreadPool(5)
         executorService.submit(AudioDecoder())
+        executorService.submit(VideoDecoder(surfaceView = surfaceView))
     }
 }
