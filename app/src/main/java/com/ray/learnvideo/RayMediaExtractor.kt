@@ -2,61 +2,46 @@ package com.ray.learnvideo
 
 import android.media.MediaExtractor
 import android.media.MediaFormat
-import android.util.Log
 import java.nio.ByteBuffer
 
 /**
  * Author : Ray
- * Time : 2020/9/4 3:29 PM
+ * Time : 2020/9/6 8:22 PM
  * Description :
  */
-class VideoExtractor {
-
-    companion object {
-        const val TAG = "VideoExtractor"
-    }
+abstract class RayMediaExtractor {
 
     private val mExtractor = MediaExtractor()
 
-    private var mVideoTrack = -1
+    private var mTrack = -1
 
     private var mSampleTime = -1L
 
     fun setDataSource(url: String) {
         mExtractor.setDataSource(url)
-        Log.d(TAG, "data source = $url")
     }
 
-    fun getVideoFormat(): MediaFormat? {
+    fun getTrackFormat(): MediaFormat? {
         val trackCount = mExtractor.trackCount
         for (i in 0 until trackCount) {
             val trackFormat = mExtractor.getTrackFormat(i)
             val mime = trackFormat.getString(MediaFormat.KEY_MIME)
-            if (mime?.startsWith("video/")!!) {
-                mVideoTrack = i
+            if (mime?.startsWith(getDataType())!!) {
+                mTrack = i
                 break
             }
         }
-        if (mVideoTrack >= 0) {
-            return mExtractor.getTrackFormat(mVideoTrack)
+        if (mTrack >= 0) {
+            return mExtractor.getTrackFormat(mTrack)
         }
         return null
     }
 
     fun readBuffer(buffer: ByteBuffer): Int {
         buffer.clear()
-        val trackCount = mExtractor.trackCount
-        for (i in 0 until trackCount) {
-            val trackFormat = mExtractor.getTrackFormat(i)
-            val mime = trackFormat.getString(MediaFormat.KEY_MIME)
-            if (mime?.startsWith("video/")!!) {
-                mExtractor.selectTrack(i)
-                break
-            }
-        }
+        mExtractor.selectTrack(mTrack)
         val sampleSize = mExtractor.readSampleData(buffer, 0)
         mSampleTime = mExtractor.sampleTime
-        Log.d(TAG, "extract data = $sampleSize bytes")
         mExtractor.advance()
         return sampleSize
     }
@@ -66,5 +51,7 @@ class VideoExtractor {
     }
 
     fun getCurrentTimestamp() = mSampleTime
+
+    abstract fun getDataType(): String
 
 }

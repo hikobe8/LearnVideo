@@ -1,10 +1,9 @@
 package com.ray.learnvideo.decoder
 
 import android.media.*
-import android.os.Environment
-import android.util.Log
 import com.ray.learnvideo.AudioExtractor
-import java.io.File
+import com.ray.learnvideo.RayMediaExtractor
+import java.nio.ByteBuffer
 
 /**
  * Author : Ray
@@ -41,115 +40,59 @@ import java.io.File
     codec.stop();
     codec.release();
 */
-class AudioDecoder : Runnable {
+class AudioDecoder(path: String) : BaseDecoder(path) {
 
-    private var mIsRunning = true
-
-    private var mediaExtractor: AudioExtractor? = null
-
-    private var mCodec: MediaCodec? = null
-
-    private val mBufferInfo = MediaCodec.BufferInfo()
+    override fun getExtractor(): RayMediaExtractor {
+        return AudioExtractor().apply {
+            setDataSource(path)
+        }
+    }
 
     private var mAudioTrack: AudioTrack? = null
 
     private var mAudioOutTempBuffer = ShortArray(0)
 
-    override fun run() {
-        initExtractor()
-        initCodec()
-        Log.e("解码器", "开始解码")
-        while (mIsRunning) {
-            val inputBufferId = mCodec!!.dequeueInputBuffer(1000)
-            //填充数据， 原数据喂给解码器
-            if (inputBufferId >= 0) {
-                val buffer = mCodec!!.getInputBuffer(inputBufferId)
-                //填充数据给解码器
-                val sampleSize = mediaExtractor!!.readBuffer(buffer!!)
-                if (sampleSize < 0) {
-                    mCodec!!.queueInputBuffer(
-                        inputBufferId,
-                        0,
-                        0,
-                        0,
-                        MediaCodec.BUFFER_FLAG_END_OF_STREAM
-                    )
-                } else {
-                    mCodec!!.queueInputBuffer(
-                        inputBufferId,
-                        0,
-                        sampleSize,
-                        mediaExtractor!!.getCurrentTimestamp(),
-                        0
-                    )
-                }
-
-            }
-            //从解码器中读取已解码的数据
-            val outputBufferId = mCodec!!.dequeueOutputBuffer(mBufferInfo, 1000)
-            if (outputBufferId >= 0) {
-                val outputBuffer = mCodec!!.getOutputBuffer(outputBufferId)
-                if (mAudioOutTempBuffer.size < mBufferInfo.size / 2) {
-                    mAudioOutTempBuffer = ShortArray(mBufferInfo.size / 2)
-                }
-                outputBuffer?.apply {
-                    position(0)
-                    asShortBuffer().get(mAudioOutTempBuffer, 0, mBufferInfo.size / 2)
-                    mAudioTrack!!.write(mAudioOutTempBuffer, 0, mBufferInfo.size / 2)
-                }
-                mCodec!!.releaseOutputBuffer(outputBufferId, true)
-            }
-            if (mBufferInfo.flags == MediaCodec.BUFFER_FLAG_END_OF_STREAM) {
-                mIsRunning = false
-            }
+    override fun render(buffer: ByteBuffer?, bufferInfo: MediaCodec.BufferInfo) {
+        if (mAudioOutTempBuffer.size < bufferInfo.size / 2) {
+            mAudioOutTempBuffer = ShortArray(bufferInfo.size / 2)
         }
-        Log.e("解码器", "解码结束")
-        mCodec!!.release()
-        mediaExtractor!!.stop()
-    }
-
-    private fun initCodec() {
-        val audioFormat = mediaExtractor?.getAudioFormat()
-        if (audioFormat != null) {
-            val mime = audioFormat.getString(MediaFormat.KEY_MIME)
-            mCodec = MediaCodec.createDecoderByType(mime!!)
-            mCodec!!.configure(audioFormat, null, null, 0)
-            mCodec!!.start()
-
-            //初始化播放器 AudioTrack
-            val sampleRate = audioFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
-            val channelCount = audioFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
-            val pcmEncodeBit = if (audioFormat.containsKey(MediaFormat.KEY_PCM_ENCODING)) {
-                audioFormat.getInteger(MediaFormat.KEY_PCM_ENCODING)
-            } else {
-                AudioFormat.ENCODING_PCM_16BIT
-            }
-            val channel = if (channelCount == 1) {
-                AudioFormat.CHANNEL_OUT_MONO
-            } else {
-                AudioFormat.CHANNEL_OUT_STEREO
-            }
-            val minBufferSize = AudioTrack.getMinBufferSize(sampleRate, channel, pcmEncodeBit)
-            mAudioOutTempBuffer = ShortArray(minBufferSize / 2)
-            mAudioTrack = AudioTrack(
-                AudioManager.STREAM_MUSIC,
-                sampleRate,
-                channel,
-                pcmEncodeBit,
-                minBufferSize,
-                AudioTrack.MODE_STREAM
-            )
-            mAudioTrack!!.play()
+        buffer?.apply {
+            position(0)
+            asShortBuffer().get(mAudioOutTempBuffer, 0, bufferInfo.size / 2)
+            mAudioTrack!!.write(mAudioOutTempBuffer, 0, bufferInfo.size / 2)
         }
     }
 
-    private fun initExtractor() {
-        mediaExtractor = AudioExtractor().apply {
-            setDataSource(
-                Environment.getExternalStorageDirectory()
-                    .toString() + File.separator + "monkey.mp4"
-            )
+    override fun configureCodec(codec: MediaCodec, mediaFormat: MediaFormat?) {
+        codec.configure(mediaFormat, null, null, 0)
+        codec.start()
+    }
+
+    override fun initRender(audioFormat: MediaFormat) {
+        //初始化播放器 AudioTrack
+        val sampleRate = audioFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+        val channelCount = audioFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+        val pcmEncodeBit = if (audioFormat.containsKey(MediaFormat.KEY_PCM_ENCODING)) {
+            audioFormat.getInteger(MediaFormat.KEY_PCM_ENCODING)
+        } else {
+            AudioFormat.ENCODING_PCM_16BIT
         }
+        val channel = if (channelCount == 1) {
+            AudioFormat.CHANNEL_OUT_MONO
+        } else {
+            AudioFormat.CHANNEL_OUT_STEREO
+        }
+        val minBufferSize = AudioTrack.getMinBufferSize(sampleRate, channel, pcmEncodeBit)
+        mAudioOutTempBuffer = ShortArray(minBufferSize / 2)
+        mAudioTrack = AudioTrack(
+            AudioManager.STREAM_MUSIC,
+            sampleRate,
+            channel,
+            pcmEncodeBit,
+            minBufferSize,
+            AudioTrack.MODE_STREAM
+        )
+        mAudioTrack!!.play()
     }
 
 }
