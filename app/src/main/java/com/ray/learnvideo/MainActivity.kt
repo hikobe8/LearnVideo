@@ -6,7 +6,6 @@ import android.media.MediaFormat
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.util.Log
 import android.view.SurfaceHolder
 import androidx.appcompat.app.AppCompatActivity
 import com.ray.learnvideo.decoder.AudioDecoder
@@ -17,7 +16,7 @@ import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
 
-    val PATH =
+    val path =
         Environment.getExternalStorageDirectory().absolutePath + File.separator + "monkey.mp4"
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,7 +29,7 @@ class MainActivity : AppCompatActivity() {
         }
         VideoExtractor().apply {
             setDataSource(
-                PATH
+                path
             )
             val trackFormat = getTrackFormat()
             val width = trackFormat!!.getInteger(MediaFormat.KEY_WIDTH)
@@ -59,11 +58,11 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun surfaceCreated(holder: SurfaceHolder?) {
-                    executorService.submit(AudioDecoder(PATH))
+                    executorService.submit(AudioDecoder(path))
                     executorService.submit(
                         VideoDecoder(
                             holder!!.surface,
-                            PATH
+                            path
                         )
                     )
                 }
