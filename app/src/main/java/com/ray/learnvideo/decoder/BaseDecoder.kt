@@ -52,11 +52,39 @@ abstract class BaseDecoder(var path: String) : Runnable {
 
     abstract fun getExtractor(): RayMediaExtractor
 
+    private val mLock = Object()
+
+    private var mPaused = false
+
+    open fun resume() {
+        mPaused = false
+        notifyDecode()
+    }
+
+    fun pause() {
+        mPaused = true
+    }
+
+    private fun waitDecode() {
+        synchronized(mLock) {
+            mLock.wait()
+        }
+    }
+
+    private fun notifyDecode() {
+        synchronized(mLock) {
+            mLock.notifyAll()
+        }
+    }
+
     override fun run() {
         initExtractor()
         initCodec()
         Log.e("解码器", "开始解码")
         while (mIsRunning) {
+            if (mPaused) {
+                waitDecode()
+            }
             val inputBufferId = mCodec!!.dequeueInputBuffer(1000)
             //填充数据，原数据喂给解码器
             if (inputBufferId >= 0) {

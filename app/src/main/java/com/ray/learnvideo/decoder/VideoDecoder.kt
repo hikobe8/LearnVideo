@@ -51,4 +51,9 @@ class VideoDecoder(private var mSurface: Surface, path: String) : BaseDecoder(pa
 
     override fun initRender(audioFormat: MediaFormat) {}
 
+    override fun resume() {
+        super.resume()
+        mIsFirst = true
+    }
+
 }
