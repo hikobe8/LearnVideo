@@ -16,6 +16,7 @@ abstract class RayMediaExtractor {
     private var mTrack = -1
 
     private var mSampleTime = -1L
+    private var mSampleFlags = -1
 
     fun setDataSource(url: String) {
         mExtractor.setDataSource(url)
@@ -42,6 +43,7 @@ abstract class RayMediaExtractor {
         mExtractor.selectTrack(mTrack)
         val sampleSize = mExtractor.readSampleData(buffer, 0)
         mSampleTime = mExtractor.sampleTime
+        mSampleFlags = mExtractor.sampleFlags
         mExtractor.advance()
         return sampleSize
     }
@@ -51,6 +53,8 @@ abstract class RayMediaExtractor {
     }
 
     fun getCurrentTimestamp() = mSampleTime
+
+    fun getCurrentSampleFlags() = mSampleFlags
 
     abstract fun getDataType(): String
 

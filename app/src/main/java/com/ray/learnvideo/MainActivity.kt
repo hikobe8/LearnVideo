@@ -2,7 +2,9 @@ package com.ray.learnvideo
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.media.MediaCodec
 import android.media.MediaFormat
+import android.media.MediaMuxer
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -14,8 +16,10 @@ import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import com.ray.learnvideo.decoder.AudioDecoder
 import com.ray.learnvideo.decoder.VideoDecoder
+import com.ray.learnvideo.repack.VideoRepack
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
+import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 
 
@@ -62,7 +66,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun repack(view: View) {
-
+        VideoRepack(path).start()
     }
 }
 
@@ -159,3 +163,4 @@ class SimpleVideoPlayer(private val path: String) {
     fun isPlaying() = mState == STATE_PLAYING
 
 }
+
