@@ -1,5 +1,7 @@
 package com.ray.learnvideo.opengl
 
+import android.graphics.BitmapFactory
+import android.opengl.GLSurfaceView
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import com.ray.learnvideo.R
@@ -15,18 +17,20 @@ class GlDrawerActivity : AppCompatActivity() {
         glSV.setEGLContextClientVersion(2)
         drawer = createDrawer()
         glSV.setRenderer(SimpleRender(drawer))
+        glSV.renderMode = GLSurfaceView.RENDERMODE_WHEN_DIRTY
     }
 
     private fun createDrawer(): IDrawer {
         return when (intent.getIntExtra("type", TYPE_TRIANGLE)) {
-            TYPE_SQUARE -> {
+            TYPE_TRIANGLE -> {
                 TriangleDrawer()
             }
             TYPE_SQUARE -> {
                 TriangleDrawer()
             }
             else -> {
-                TriangleDrawer()
+                val bmp = BitmapFactory.decodeResource(resources, R.drawable.android)
+                BitmapDrawer(bmp)
             }
         }
     }

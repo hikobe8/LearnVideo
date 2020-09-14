@@ -14,6 +14,14 @@ class OpenGLActivity : AppCompatActivity() {
     }
 
     fun triangle(view: View) {
-        startActivity(Intent(this, GlDrawerActivity::class.java))
+        startActivity(Intent(this, GlDrawerActivity::class.java).apply {
+            putExtra("type", TYPE_TRIANGLE)
+        })
+    }
+
+    fun bitmap(view: View) {
+        startActivity(Intent(this, GlDrawerActivity::class.java).apply {
+            putExtra("type", 3)
+        })
     }
 }

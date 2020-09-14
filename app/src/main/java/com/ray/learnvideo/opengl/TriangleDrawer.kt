@@ -18,21 +18,11 @@ class TriangleDrawer : IDrawer {
         0f, .5f
     )
 
-    //纹理坐标系 和 Android屏幕坐标系一致
-    private val mTextureCoors = floatArrayOf(
-        0f, .5f,
-        .5f, .5f,
-        0.5f, .5f
-    )
-
     private lateinit var mVertexBuffer: FloatBuffer
-    private lateinit var mTextureBuffer: FloatBuffer
 
     private var mTextureId = -1
 
     private var mVertexPosHandle = -1
-
-    private var mTexturePosHandle = -1
 
     private var mProgram = -1
 
@@ -41,17 +31,11 @@ class TriangleDrawer : IDrawer {
     }
 
     private fun initPos() {
-        var buffer = ByteBuffer.allocateDirect(mVertexCoors.size * 4)
+        val buffer = ByteBuffer.allocateDirect(mVertexCoors.size * 4)
         buffer.order(ByteOrder.nativeOrder())
         mVertexBuffer = buffer.asFloatBuffer()
         mVertexBuffer.put(mVertexCoors)
         mVertexBuffer.position(0)
-
-        buffer = ByteBuffer.allocateDirect(mTextureCoors.size * 4)
-        buffer.order(ByteOrder.nativeOrder())
-        mTextureBuffer = buffer.asFloatBuffer()
-        mTextureBuffer.put(mTextureCoors)
-        mTextureBuffer.position(0)
     }
 
     override fun setTextureId(id: Int) {
@@ -67,7 +51,6 @@ class TriangleDrawer : IDrawer {
 
     private fun drawInternal() {
         GLES20.glEnableVertexAttribArray(mVertexPosHandle)
-        GLES20.glEnableVertexAttribArray(mTexturePosHandle)
         GLES20.glVertexAttribPointer(mVertexPosHandle, 2, GLES20.GL_FLOAT, false, 8, mVertexBuffer)
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 3)
     }
@@ -83,14 +66,12 @@ class TriangleDrawer : IDrawer {
             GLES20.glAttachShader(mProgram, fragment)
             GLES20.glLinkProgram(mProgram)
             mVertexPosHandle = GLES20.glGetAttribLocation(mProgram, "aPosition")
-            mTexturePosHandle = GLES20.glGetAttribLocation(mProgram, "aCoordinate")
         }
         GLES20.glUseProgram(mProgram)
     }
 
     override fun release() {
         GLES20.glDisableVertexAttribArray(mVertexPosHandle)
-        GLES20.glDisableVertexAttribArray(mTexturePosHandle)
         GLES20.glBindTexture(GLES20.GL_TEXTURE0, 0)
         GLES20.glDeleteTextures(1, intArrayOf(mTextureId), 0)
         GLES20.glDeleteProgram(mProgram)
