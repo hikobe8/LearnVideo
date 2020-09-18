@@ -1,8 +1,8 @@
 package com.ray.learnvideo.opengl
 
-import android.graphics.Bitmap
+import android.graphics.SurfaceTexture
+import android.opengl.GLES11Ext
 import android.opengl.GLES20.*
-import android.opengl.GLUtils
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
@@ -12,7 +12,7 @@ import java.nio.FloatBuffer
  * Time : 2020/9/14 2:55 PM
  * Description : 使用OpenGL 绘制图片
  */
-class BitmapDrawer(private val mBitmap: Bitmap) : IDrawer {
+class VideoDrawer(private var mSfCallback: ((SurfaceTexture) -> Unit)? = null) : IDrawer {
 
     private val mVertexCoors = floatArrayOf(
         -1f, 1f,
@@ -29,6 +29,7 @@ class BitmapDrawer(private val mBitmap: Bitmap) : IDrawer {
         1f, 1f
     )
 
+
     private lateinit var mVertexBuffer: FloatBuffer
     private lateinit var mTextureBuffer: FloatBuffer
 
@@ -41,6 +42,8 @@ class BitmapDrawer(private val mBitmap: Bitmap) : IDrawer {
     private var mTextureHandle = -1
 
     private var mProgram = -1
+
+    private var mSurfaceTexture: SurfaceTexture? = null
 
     init {
         initPos()
@@ -62,34 +65,44 @@ class BitmapDrawer(private val mBitmap: Bitmap) : IDrawer {
 
     override fun setTextureId(id: Int) {
         mTextureId = id
+        mSurfaceTexture = SurfaceTexture(id)
+        mSfCallback?.invoke(mSurfaceTexture!!)
     }
 
     override fun draw() {
         if (mTextureId != -1) {
             create()
             activeTexture()
-            bitmap2Texture()
+            updateTexture()
             drawInternal()
         }
     }
 
-    private fun bitmap2Texture() {
-        GLUtils.texImage2D(GL_TEXTURE_2D, 0, mBitmap, 0)
+    private fun updateTexture() {
+        mSurfaceTexture?.updateTexImage()
     }
 
     private fun activeTexture() {
         //激活
         glActiveTexture(GL_TEXTURE0)
         //绑定texture
-        glBindTexture(GL_TEXTURE_2D, mTextureId)
+        glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, mTextureId)
         //传递纹理单元到着色器
         glUniform1i(mTextureHandle, 0)
         //配置纹理过滤模式
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR.toFloat())
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR.toFloat())
+        glTexParameterf(
+            GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+            GL_TEXTURE_MIN_FILTER,
+            GL_LINEAR.toFloat()
+        )
+        glTexParameterf(
+            GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+            GL_TEXTURE_MAG_FILTER,
+            GL_LINEAR.toFloat()
+        )
         //配置纹理环绕方式
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+        glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
     }
 
     private fun drawInternal() {
@@ -130,18 +143,19 @@ class BitmapDrawer(private val mBitmap: Bitmap) : IDrawer {
                 "attribute vec2 aCoordinate;" +
                 "varying vec2 vCoordinate;" +
                 "void main() {" +
-                "  gl_Position = aPosition;" +
-                "  vCoordinate = aCoordinate;" +
+                "    gl_Position = aPosition;" +
+                "    vCoordinate = aCoordinate;" +
                 "}"
     }
 
     private fun getFragmentShader(): String {
-        return "precision mediump float;" +
-                "uniform sampler2D uTexture;" +
+        //一定要加换行"\n"，否则会和下一行的precision混在一起，导致编译出错
+        return "#extension GL_OES_EGL_image_external : require\n" +
+                "precision mediump float;" +
                 "varying vec2 vCoordinate;" +
+                "uniform samplerExternalOES uTexture;" +
                 "void main() {" +
-                "  vec4 color = texture2D(uTexture, vCoordinate);" +
-                "  gl_FragColor = color;" +
+                "  gl_FragColor=texture2D(uTexture, vCoordinate);" +
                 "}"
     }
 

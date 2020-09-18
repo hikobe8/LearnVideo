@@ -1,11 +1,13 @@
 package com.ray.learnvideo.opengl
 
 import android.graphics.BitmapFactory
-import android.opengl.GLSurfaceView
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Environment
+import androidx.appcompat.app.AppCompatActivity
 import com.ray.learnvideo.R
+import com.ray.learnvideo.SimpleVideoPlayer
 import kotlinx.android.synthetic.main.activity_gl_drawer.*
+import java.io.File
 
 class GlDrawerActivity : AppCompatActivity() {
 
@@ -17,7 +19,6 @@ class GlDrawerActivity : AppCompatActivity() {
         glSV.setEGLContextClientVersion(2)
         drawer = createDrawer()
         glSV.setRenderer(SimpleRender(drawer))
-        glSV.renderMode = GLSurfaceView.RENDERMODE_WHEN_DIRTY
     }
 
     private fun createDrawer(): IDrawer {
@@ -28,10 +29,21 @@ class GlDrawerActivity : AppCompatActivity() {
             TYPE_SQUARE -> {
                 TriangleDrawer()
             }
-            else -> {
+            TYPE_IMAGE -> {
                 val bmp = BitmapFactory.decodeResource(resources, R.drawable.android)
                 BitmapDrawer(bmp)
             }
+            TYPE_VIDEO -> {
+                VideoDrawer { surfaceTexture ->
+                    SimpleVideoPlayer(
+                        Environment.getExternalStorageDirectory().absolutePath + File.separator + "monkey.mp4"
+                    ).apply {
+                        prepare(surfaceTexture)
+                        start()
+                    }
+                }
+            }
+            else -> TriangleDrawer()
         }
     }
 

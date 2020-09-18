@@ -2,9 +2,8 @@ package com.ray.learnvideo
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.media.MediaCodec
+import android.graphics.SurfaceTexture
 import android.media.MediaFormat
-import android.media.MediaMuxer
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -19,7 +18,6 @@ import com.ray.learnvideo.decoder.VideoDecoder
 import com.ray.learnvideo.repack.VideoRepack
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
-import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 
 
@@ -81,8 +79,6 @@ class SimpleVideoPlayer(private val path: String) {
     private var audioDecoder: AudioDecoder? = null
     private var executorService = Executors.newFixedThreadPool(2)
 
-    private lateinit var surfaceView: SurfaceView
-
     private var mState = STATE_IDLE
 
     private var mPrepared = false
@@ -90,7 +86,6 @@ class SimpleVideoPlayer(private val path: String) {
     private lateinit var mSurface: Surface
 
     fun prepare(surfaceView: SurfaceView) {
-        this.surfaceView = surfaceView
         surfaceView.holder.addCallback(object : SurfaceHolder.Callback2 {
             override fun surfaceRedrawNeeded(holder: SurfaceHolder?) {
 
@@ -102,11 +97,6 @@ class SimpleVideoPlayer(private val path: String) {
                 width: Int,
                 height: Int
             ) {
-                mPrepared = true
-                mSurface = holder!!.surface
-                if (mState == STATE_PLAYING) {
-                    start()
-                }
             }
 
             override fun surfaceDestroyed(holder: SurfaceHolder?) {
@@ -121,6 +111,11 @@ class SimpleVideoPlayer(private val path: String) {
                 }
             }
         })
+    }
+
+    fun prepare(surfaceTexture: SurfaceTexture) {
+        mPrepared = true
+        mSurface = Surface(surfaceTexture)
     }
 
     fun start() {

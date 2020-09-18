@@ -22,4 +22,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
+    <Button
+        android:layout_margin="16dp"
+        android:text="OpenGLES 渲染视频"
+        android:onClick="video"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
 </LinearLayout>

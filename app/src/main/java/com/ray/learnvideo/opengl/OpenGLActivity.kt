@@ -21,7 +21,13 @@ class OpenGLActivity : AppCompatActivity() {
 
     fun bitmap(view: View) {
         startActivity(Intent(this, GlDrawerActivity::class.java).apply {
-            putExtra("type", 3)
+            putExtra("type", TYPE_IMAGE)
+        })
+    }
+
+    fun video(view: View) {
+        startActivity(Intent(this, GlDrawerActivity::class.java).apply {
+            putExtra("type", TYPE_VIDEO)
         })
     }
 }

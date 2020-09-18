@@ -7,7 +7,7 @@ package com.ray.learnvideo.opengl
  */
 interface IDrawer {
 
-    fun setTextureId(id:Int)
+    fun setTextureId(id: Int)
 
     fun draw()
 
@@ -18,3 +18,4 @@ interface IDrawer {
 const val TYPE_TRIANGLE = 0
 const val TYPE_SQUARE = 1
 const val TYPE_IMAGE = 2
+const val TYPE_VIDEO = 3
