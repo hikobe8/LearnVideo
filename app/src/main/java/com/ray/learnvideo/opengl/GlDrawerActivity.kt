@@ -13,55 +13,75 @@ import java.io.File
 
 class GlDrawerActivity : AppCompatActivity() {
 
-    private lateinit var drawer: IDrawer
+    private lateinit var drawers: ArrayList<IDrawer>
+    private var players: MutableList<SimpleVideoPlayer> = mutableListOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_gl_drawer)
         glSV.setEGLContextClientVersion(2)
-        drawer = createDrawer()
-        glSV.setRenderer(SimpleRender(drawer))
+        drawers = createDrawer()
+        glSV.setRenderer(SimpleRender().apply {
+            addDrawers(drawers)
+        })
     }
 
-    private fun createDrawer(): IDrawer {
+    private fun createDrawer(): ArrayList<IDrawer> {
         return when (intent.getIntExtra("type", TYPE_TRIANGLE)) {
             TYPE_TRIANGLE -> {
-                TriangleDrawer()
+                arrayListOf(TriangleDrawer())
             }
             TYPE_SQUARE -> {
-                TriangleDrawer()
+                arrayListOf(TriangleDrawer())
             }
             TYPE_IMAGE -> {
                 val bmp = BitmapFactory.decodeResource(resources, R.drawable.android)
-                BitmapDrawer(bmp)
+                arrayListOf(BitmapDrawer(bmp))
             }
             TYPE_VIDEO -> {
-                VideoExtractor().run {
-                    setDataSource(
-                        Environment.getExternalStorageDirectory().absolutePath + File.separator + "monkey.mp4"
-                    )
-                    val trackFormat = getTrackFormat()
-                    val width = trackFormat!!.getInteger(MediaFormat.KEY_WIDTH)
-                    val height = trackFormat.getInteger(MediaFormat.KEY_HEIGHT)
-                    VideoDrawer { surfaceTexture ->
-                        SimpleVideoPlayer(
-                            Environment.getExternalStorageDirectory().absolutePath + File.separator + "monkey.mp4"
-                        ).apply {
-                            prepare(surfaceTexture)
-                            start()
-                        }
-                    }.apply {
-                        setVideoSize(width, height)
-                    }
-                }
+                arrayListOf(createVideoDrawer(Environment.getExternalStorageDirectory().absolutePath + File.separator + "monkey.mp4"))
 
             }
-            else -> TriangleDrawer()
+            TYPE_VIDEO_MULTIPLE -> {
+                val first =
+                    createVideoDrawer(Environment.getExternalStorageDirectory().absolutePath + File.separator + "monkey.mp4")
+                val second =
+                    createVideoDrawer(
+                        Environment.getExternalStorageDirectory().absolutePath + File.separator + "dragon.mp4",
+                        0.3f
+                    )
+                arrayListOf(first, second)
+            }
+            else -> arrayListOf(TriangleDrawer())
+        }
+    }
+
+    private fun createVideoDrawer(path: String, alpha: Float = 1f) = VideoExtractor().run {
+        setDataSource(path)
+        val trackFormat = getTrackFormat()
+        val width = trackFormat!!.getInteger(MediaFormat.KEY_WIDTH)
+        val height = trackFormat.getInteger(MediaFormat.KEY_HEIGHT)
+        VideoDrawer { surfaceTexture ->
+            SimpleVideoPlayer(
+                path
+            ).apply {
+                prepare(surfaceTexture)
+                start()
+                players.add(this)
+            }
+        }.apply {
+            setVideoSize(width, height)
+            setVideoAlpha(alpha)
         }
     }
 
     override fun onDestroy() {
-        drawer.release()
+        for (drawer in drawers) {
+            drawer.release()
+        }
+        for (player in players) {
+            player.release()
+        }
         super.onDestroy()
     }
 

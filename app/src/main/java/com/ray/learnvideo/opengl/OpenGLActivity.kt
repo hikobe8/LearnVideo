@@ -30,4 +30,10 @@ class OpenGLActivity : AppCompatActivity() {
             putExtra("type", TYPE_VIDEO)
         })
     }
+
+    fun videoMulti(view: View) {
+        startActivity(Intent(this, GlDrawerActivity::class.java).apply {
+            putExtra("type", TYPE_VIDEO_MULTIPLE)
+        })
+    }
 }

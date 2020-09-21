@@ -21,3 +21,4 @@ const val TYPE_TRIANGLE = 0
 const val TYPE_SQUARE = 1
 const val TYPE_IMAGE = 2
 const val TYPE_VIDEO = 3
+const val TYPE_VIDEO_MULTIPLE = 4

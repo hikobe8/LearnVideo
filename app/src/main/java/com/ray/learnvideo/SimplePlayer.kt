@@ -66,6 +66,12 @@ class SimplePlayerActivity : AppCompatActivity() {
     fun repack(view: View) {
         VideoRepack(path).start()
     }
+
+    override fun onDestroy() {
+        simpleVideoPlayer.release()
+        super.onDestroy()
+    }
+
 }
 
 class SimpleVideoPlayer(private val path: String) {
@@ -156,6 +162,11 @@ class SimpleVideoPlayer(private val path: String) {
     }
 
     fun isPlaying() = mState == STATE_PLAYING
+
+    fun release(){
+        audioDecoder?.release()
+        videoDecoder?.release()
+    }
 
 }
 

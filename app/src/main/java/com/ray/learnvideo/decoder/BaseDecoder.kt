@@ -146,4 +146,8 @@ abstract class BaseDecoder(var path: String) : Runnable {
         mediaExtractor = getExtractor()
     }
 
+    fun release(){
+        mIsRunning = false
+        notifyDecode()
+    }
 }

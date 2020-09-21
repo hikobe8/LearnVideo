@@ -44,6 +44,8 @@ class VideoDrawer(private var mSfCallback: ((SurfaceTexture) -> Unit)? = null) :
 
     private var mMatrixHandle = -1
 
+    private var mAlphaHandle = -1
+
     private var mProgram = -1
 
     private var mSurfaceTexture: SurfaceTexture? = null
@@ -55,6 +57,8 @@ class VideoDrawer(private var mSfCallback: ((SurfaceTexture) -> Unit)? = null) :
     private var mVideoHeight = 0
 
     private var mMatrix: FloatArray? = null
+
+    private var mVideoAlpha = 1f
 
     init {
         initPos()
@@ -170,6 +174,7 @@ class VideoDrawer(private var mSfCallback: ((SurfaceTexture) -> Unit)? = null) :
 
         glVertexAttribPointer(mVertexPosHandle, 2, GL_FLOAT, false, 8, mVertexBuffer)
         glVertexAttribPointer(mTexturePosHandle, 2, GL_FLOAT, false, 8, mTextureBuffer)
+        glVertexAttrib1f(mAlphaHandle, mVideoAlpha)
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
     }
 
@@ -187,6 +192,7 @@ class VideoDrawer(private var mSfCallback: ((SurfaceTexture) -> Unit)? = null) :
             mTexturePosHandle = glGetAttribLocation(mProgram, "aCoordinate")
             mTextureHandle = glGetUniformLocation(mProgram, "uTexture")
             mMatrixHandle = glGetUniformLocation(mProgram, "uMatrix")
+            mAlphaHandle = glGetAttribLocation(mProgram, "alpha")
         }
         glUseProgram(mProgram)
     }
@@ -204,6 +210,10 @@ class VideoDrawer(private var mSfCallback: ((SurfaceTexture) -> Unit)? = null) :
         mVideoHeight = height
     }
 
+    fun setVideoAlpha(alpha: Float) {
+        mVideoAlpha = alpha
+    }
+
     override fun setWorldSize(width: Int, height: Int) {
         mWorldWidth = width
         mWorldHeight = height
@@ -214,9 +224,12 @@ class VideoDrawer(private var mSfCallback: ((SurfaceTexture) -> Unit)? = null) :
                 "uniform mat4 uMatrix;" +
                 "attribute vec2 aCoordinate;" +
                 "varying vec2 vCoordinate;" +
+                "attribute float alpha;" +
+                "varying float inAlpha;" +
                 "void main() {" +
                 "    gl_Position = aPosition*uMatrix;" +
                 "    vCoordinate = aCoordinate;" +
+                "    inAlpha = alpha;" +
                 "}"
     }
 
@@ -226,8 +239,10 @@ class VideoDrawer(private var mSfCallback: ((SurfaceTexture) -> Unit)? = null) :
                 "precision mediump float;" +
                 "varying vec2 vCoordinate;" +
                 "uniform samplerExternalOES uTexture;" +
+                "varying float inAlpha;" +
                 "void main() {" +
-                "  gl_FragColor=texture2D(uTexture, vCoordinate);" +
+                "  vec4 color=texture2D(uTexture, vCoordinate);" +
+                "  gl_FragColor=vec4(color.r, color.g, color.b, inAlpha);" +
                 "}"
     }
 
