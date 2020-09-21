@@ -125,6 +125,9 @@ class BitmapDrawer(private val mBitmap: Bitmap) : IDrawer {
         glDeleteProgram(mProgram)
     }
 
+    override fun setWorldSize(width: Int, height: Int) {
+    }
+
     private fun getVertexShader(): String {
         return "attribute vec4 aPosition;" +
                 "attribute vec2 aCoordinate;" +

@@ -3,6 +3,7 @@ package com.ray.learnvideo.opengl
 import android.graphics.SurfaceTexture
 import android.opengl.GLES11Ext
 import android.opengl.GLES20.*
+import android.opengl.Matrix
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
@@ -41,9 +42,19 @@ class VideoDrawer(private var mSfCallback: ((SurfaceTexture) -> Unit)? = null) :
 
     private var mTextureHandle = -1
 
+    private var mMatrixHandle = -1
+
     private var mProgram = -1
 
     private var mSurfaceTexture: SurfaceTexture? = null
+
+    private var mWorldWidth = 0
+    private var mWorldHeight = 0
+
+    private var mVideoWidth = 0
+    private var mVideoHeight = 0
+
+    private var mMatrix: FloatArray? = null
 
     init {
         initPos()
@@ -71,10 +82,56 @@ class VideoDrawer(private var mSfCallback: ((SurfaceTexture) -> Unit)? = null) :
 
     override fun draw() {
         if (mTextureId != -1) {
+            initMatrix()
             create()
             activeTexture()
             updateTexture()
             drawInternal()
+        }
+    }
+
+    private fun initMatrix() {
+        if (mMatrix != null)
+            return
+        mMatrix = FloatArray(16)
+        val videoRatio = mVideoWidth.toFloat() / mVideoHeight
+        val worldRatio = mWorldWidth.toFloat() / mWorldHeight
+        if (mWorldWidth < mVideoHeight) {
+            if (videoRatio < worldRatio) {
+                val realRatio = worldRatio / videoRatio
+                Matrix.orthoM(
+                    mMatrix, 0,
+                    -realRatio, realRatio,
+                    -1f, 1f,
+                    -1f, 3f
+                )
+            } else {
+                val realRatio = videoRatio / worldRatio
+                Matrix.orthoM(
+                    mMatrix, 0,
+                    -1f, 1f,
+                    -realRatio, realRatio,
+                    -1f, 3f
+                )
+            }
+        } else {
+            if (videoRatio < worldRatio) {
+                val realRatio = worldRatio / videoRatio
+                Matrix.orthoM(
+                    mMatrix, 0,
+                    -realRatio, realRatio,
+                    -1f, 1f,
+                    -1f, 3f
+                )
+            } else {
+                val realRatio = videoRatio / worldRatio
+                Matrix.orthoM(
+                    mMatrix, 0,
+                    -1f, 1f,
+                    -realRatio, realRatio,
+                    -1f, 3f
+                )
+            }
         }
     }
 
@@ -108,6 +165,9 @@ class VideoDrawer(private var mSfCallback: ((SurfaceTexture) -> Unit)? = null) :
     private fun drawInternal() {
         glEnableVertexAttribArray(mVertexPosHandle)
         glEnableVertexAttribArray(mTexturePosHandle)
+
+        glUniformMatrix4fv(mMatrixHandle, 1, false, mMatrix, 0)
+
         glVertexAttribPointer(mVertexPosHandle, 2, GL_FLOAT, false, 8, mVertexBuffer)
         glVertexAttribPointer(mTexturePosHandle, 2, GL_FLOAT, false, 8, mTextureBuffer)
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
@@ -126,6 +186,7 @@ class VideoDrawer(private var mSfCallback: ((SurfaceTexture) -> Unit)? = null) :
             mVertexPosHandle = glGetAttribLocation(mProgram, "aPosition")
             mTexturePosHandle = glGetAttribLocation(mProgram, "aCoordinate")
             mTextureHandle = glGetUniformLocation(mProgram, "uTexture")
+            mMatrixHandle = glGetUniformLocation(mProgram, "uMatrix")
         }
         glUseProgram(mProgram)
     }
@@ -138,12 +199,23 @@ class VideoDrawer(private var mSfCallback: ((SurfaceTexture) -> Unit)? = null) :
         glDeleteProgram(mProgram)
     }
 
+    fun setVideoSize(width: Int, height: Int) {
+        mVideoWidth = width
+        mVideoHeight = height
+    }
+
+    override fun setWorldSize(width: Int, height: Int) {
+        mWorldWidth = width
+        mWorldHeight = height
+    }
+
     private fun getVertexShader(): String {
         return "attribute vec4 aPosition;" +
+                "uniform mat4 uMatrix;" +
                 "attribute vec2 aCoordinate;" +
                 "varying vec2 vCoordinate;" +
                 "void main() {" +
-                "    gl_Position = aPosition;" +
+                "    gl_Position = aPosition*uMatrix;" +
                 "    vCoordinate = aCoordinate;" +
                 "}"
     }

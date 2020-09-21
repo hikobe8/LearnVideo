@@ -13,6 +13,8 @@ interface IDrawer {
 
     fun release()
 
+    fun setWorldSize(width: Int, height: Int)
+
 }
 
 const val TYPE_TRIANGLE = 0

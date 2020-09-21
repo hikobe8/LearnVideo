@@ -77,6 +77,9 @@ class TriangleDrawer : IDrawer {
         GLES20.glDeleteProgram(mProgram)
     }
 
+    override fun setWorldSize(width: Int, height: Int) {
+    }
+
     private fun getVertexShader(): String {
         return "attribute vec4 aPosition;" +
                 "void main() {" +
